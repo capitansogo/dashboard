@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance History</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center my-4">История поломок/починок</h1>
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <button class="btn btn-primary" onclick="window.location.href = '/';">Back</button>
+        </div>
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <div class="form-group">
+                    <label for="inventoryNumber">Инвентарный номер</label>
+                    <input type="text" id="inventoryNumber" class="form-control" list="inventoryList">
+                    <datalist id="inventoryList"></datalist>
+                </div>
+                <button id="searchHistory" class="btn btn-primary mt-2">Поиск</button>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-8 offset-md-2">
+                <div id="historyResult"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('searchHistory').addEventListener('click', searchMaintenanceHistory);
+
+    async function searchMaintenanceHistory() {
+        var inventoryNumber = document.getElementById('inventoryNumber').value;
+        const history = await eel.get_maintenance_history_by_inventory_number(inventoryNumber)();
+        var historyResult = document.getElementById('historyResult');
+        historyResult.innerHTML = '';
+
+        var historyData = JSON.parse(history);
+        if (historyData && historyData.length > 0) {
+            var table = document.createElement('table');
+            table.classList.add('table', 'table-striped');
+            var thead = document.createElement('thead');
+            var tr = document.createElement('tr');
+            var headers = ['Event Type', 'Event Date', 'Description'];
+            headers.forEach(function (header) {
+                var th = document.createElement('th');
+                th.textContent = header;
+                tr.appendChild(th);
+            });
+            thead.appendChild(tr);
+            table.appendChild(thead);
+
+            var tbody = document.createElement('tbody');
+            historyData.forEach(function (event) {
+                var tr = document.createElement('tr');
+                var td1 = document.createElement('td');
+                td1.textContent = event.event_type;
+                var td2 = document.createElement('td');
+                td2.textContent = event.event_date;
+                var td3 = document.createElement('td');
+                td3.textContent = event.description;
+                tr.appendChild(td1);
+                tr.appendChild(td2);
+                tr.appendChild(td3);
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            historyResult.appendChild(table);
+        } else {
+            historyResult.textContent = 'Для данного инвентарного номера не найдено записей в истории.';
+        }
+    }
+
+    async function populateInventoryNumbers() {
+        const inventoryNumbers = await eel.get_inventory_numbers()();
+        console.log('Inventory Numbers:', inventoryNumbers);
+        var inventoryList = document.getElementById('inventoryList');
+        inventoryList.innerHTML = '';
+
+        var inventoryData = JSON.parse(inventoryNumbers);
+        if (inventoryData && inventoryData.length > 0) {
+            inventoryData.forEach(function (number) {
+                var option = document.createElement('option');
+                option.value = number;
+                inventoryList.appendChild(option);
+            });
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', populateInventoryNumbers);
+</script>
+<script type="text/javascript" src="/eel.js"></script>
+</body>
+</html>

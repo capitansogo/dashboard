@@ -61,7 +61,8 @@ def record_maintenance_event(text1, text2, x, y, angle, event_type, description)
 
 
 @eel.expose
-async def get_maintenance_history(text1, text2, x, y, angle):
+def get_maintenance_history_by_inventory_number(inventory_number):
+    print(inventory_number)
     try:
         conn = sqlite3.connect('machines.sl3')
         cursor = conn.cursor()
@@ -69,15 +70,31 @@ async def get_maintenance_history(text1, text2, x, y, angle):
             SELECT m.event_type, m.event_date, m.description
             FROM maintenance_history m
             JOIN machines mc ON m.machine_id = mc.id
-            WHERE mc.text1 = ? AND mc.text2 = ? AND mc.x = ? AND mc.y = ? AND mc.angle = ?
+            WHERE mc.text1 = ?
             ORDER BY m.event_date DESC
-        """, (text1, text2, x, y, angle))
+        """, (str(inventory_number),))
         rows = cursor.fetchall()
         history = [{'event_type': row[0], 'event_date': row[1], 'description': row[2]} for row in rows]
         conn.close()
         return json.dumps(history)
     except Exception as e:
-        print(f"Error retrieving maintenance history: {e}")
+        print(f"Error retrieving maintenance history by inventory number: {e}")
+        return json.dumps([])
+
+
+@eel.expose
+def get_inventory_numbers():
+    try:
+        conn = sqlite3.connect('machines.sl3')
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT text1 FROM machines")
+        rows = cursor.fetchall()
+        inventory_numbers = [str(row[0]) for row in rows]
+        print(inventory_numbers)
+        conn.close()
+        return json.dumps(inventory_numbers)
+    except Exception as e:
+        print(f"Error retrieving inventory numbers: {e}")
         return json.dumps([])
 
 
