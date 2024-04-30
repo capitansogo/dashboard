@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas with Fabric.js</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .controls {
+            display: inline-block;
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .canvas-c {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #c {
+            border: 1px solid #ccc;
+            max-width: 100%;
+            max-height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <h1 class="text-center my-4">Canvas with Fabric.js</h1>
+    <div class="canvas-c">
+        <canvas id="c"></canvas>
+    </div>
+    <div class="row my-4">
+        <div class="col-4">
+            <div class="controls">
+                <input type="text" id="text1" placeholder="Enter text 1" class="form-control">
+                <input type="text" id="text2" placeholder="Enter text 2" class="form-control mt-2">
+                <button id="add" class="btn btn-primary mt-2">Add a rectangle</button>
+                <button id="save" class="btn btn-success mt-2">Save</button>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="search">
+                <input type="text" id="searchText" placeholder="Search by Text 1" class="form-control">
+                <button id="search" class="btn btn-secondary mt-2">Search</button>
+            </div>
+            <div id="notification" class="mt-2"></div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    window.addEventListener('DOMContentLoaded', async function () {
+        const data = await eel.load_from_database()();
+        const shapes = JSON.parse(data);
+
+        for (const shape of shapes) {
+            const rect = new fabric.Rect({
+                left: shape.x,
+                top: shape.y,
+                fill: 'lightblue',
+                width: 200,
+                height: 100,
+                objectCaching: false,
+                stroke: 'green',
+                strokeWidth: 4
+            });
+
+            const text1Obj = new fabric.Text(shape.text1, {
+                fontSize: 16,
+                fontFamily: 'Arial',
+                left: rect.left + 10,
+                top: rect.top + 10
+            });
+
+            const text2Obj = new fabric.Text(shape.text2, {
+                fontSize: 16,
+                fontFamily: 'Arial',
+                left: rect.left + 10,
+                top: rect.top + rect.height - 30
+            });
+
+            const group = new fabric.Group([rect, text1Obj, text2Obj], {
+                objectCaching: false
+            });
+
+            canvas.add(group);
+            shapes.push(group);
+        }
+    });
+
+
+    var canvas = new fabric.Canvas('c');
+    canvas.setWidth(window.innerWidth - 100);
+    canvas.setHeight(900);
+
+    var shapes = [];
+
+    var deleteIcon = "data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3C!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'%3E%3Csvg version='1.1' id='Ebene_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='595.275px' height='595.275px' viewBox='200 215 230 470' xml:space='preserve'%3E%3Ccircle style='fill:%23F44336;' cx='299.76' cy='439.067' r='218.516'/%3E%3Cg%3E%3Crect x='267.162' y='307.978' transform='matrix(0.7071 -0.7071 0.7071 0.7071 -222.6202 340.6915)' style='fill:white;' width='65.545' height='262.18'/%3E%3Crect x='266.988' y='308.153' transform='matrix(0.7071 0.7071 -0.7071 0.7071 398.3889 -83.3116)' style='fill:white;' width='65.544' height='262.179'/%3E%3C/g%3E%3C/svg%3E";
+
+    var img = document.createElement('img');
+    img.src = deleteIcon;
+
+    fabric.Object.prototype.transparentCorners = false;
+    fabric.Object.prototype.cornerColor = 'blue';
+    fabric.Object.prototype.cornerStyle = 'circle';
+
+    document.getElementById('add').addEventListener('click', Add);
+    document.getElementById('save').addEventListener('click', Save);
+    document.getElementById('search').addEventListener('click', Search);
+
+    function Add() {
+        var text1 = document.getElementById('text1').value;
+        var text2 = document.getElementById('text2').value;
+
+        var rect = new fabric.Rect({
+            left: 100,
+            top: 50,
+            fill: 'lightblue',
+            width: 200,
+            height: 100,
+            objectCaching: false,
+            stroke: 'green',
+            strokeWidth: 4
+        });
+
+        var text1Obj = new fabric.Text(text1, {
+            fontSize: 16,
+            fontFamily: 'Arial',
+            left: rect.left + 10,
+            top: rect.top + 10
+        });
+
+        var text2Obj = new fabric.Text(text2, {
+            fontSize: 16,
+            fontFamily: 'Arial',
+            left: rect.left + 10,
+            top: rect.top + rect.height - 30
+        });
+
+        var group = new fabric.Group([rect, text1Obj, text2Obj], {
+            objectCaching: false
+        });
+
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        shapes.push(group);
+    }
+
+    async function Save() {
+        const shapes = canvas.getObjects().filter(obj => obj.type === 'group');
+        const data = shapes.map(group => ({
+            text1: group.item(1).text,
+            text2: group.item(2).text,
+            x: group.left,
+            y: group.top
+        }));
+
+        const response = await eel.save_to_database(data)();
+        if (response) {
+            alert('Data saved successfully!');
+        } else {
+            alert('Error saving data!');
+        }
+    }
+
+    function Search() {
+        var searchText = document.getElementById('searchText').value;
+        var notificationElement = document.getElementById('notification');
+        var foundObject = null;
+
+        for (var i = 0; i < shapes.length; i++) {
+            var group = shapes[i];
+            var text1Obj = group.item(1);
+            if (text1Obj.text === searchText) {
+                foundObject = group;
+                break;
+            }
+        }
+
+        if (foundObject) {
+            var objectCenter = foundObject.getCenterPoint();
+            var canvasCenter = new fabric.Point(canvas.getWidth() / 2, canvas.getHeight() / 2);
+            var zoomLevel = 1.5;
+
+            canvas.setZoom(zoomLevel);
+
+            var objectOffsetX = (canvasCenter.x - objectCenter.x) * zoomLevel;
+            var objectOffsetY = (canvasCenter.y - objectCenter.y) * zoomLevel;
+
+            canvas.absolutePan({
+                x: canvasCenter.x - objectOffsetX,
+                y: canvasCenter.y - objectOffsetY
+            });
+
+            canvas.setActiveObject(foundObject);
+            canvas.renderAll();
+
+            notificationElement.innerHTML = '<div class="alert alert-success">Object found!</div>';
+        } else {
+            notificationElement.innerHTML = '<div class="alert alert-warning">Object not found.</div>';
+        }
+    }
+
+    fabric.Object.prototype.controls.deleteControl = new fabric.Control({
+        x: 0.5,
+        y: -0.5,
+        offsetY: 16,
+        cursorStyle: 'pointer',
+        mouseUpHandler: deleteObject,
+        render: renderIcon,
+        cornerSize: 24
+    });
+
+    function deleteObject(eventData, transform) {
+        var target = transform.target;
+        var canvas = target.canvas;
+        canvas.remove(target);
+        canvas.requestRenderAll();
+        shapes = shapes.filter(shape => shape !== target);
+    }
+
+    function renderIcon(ctx, left, top, styleOverride, fabricObject) {
+        var size = this.cornerSize;
+        ctx.save();
+        ctx.translate(left, top);
+        ctx.rotate(fabric.util.degreesToRadians(fabricObject.angle));
+        ctx.drawImage(img, -size / 2, -size / 2, size, size);
+        ctx.restore();
+    }
+
+    canvas.on('mouse:wheel', function (opt) {
+        var delta = opt.e.deltaY;
+        var zoom = canvas.getZoom();
+        zoom *= 0.999 ** delta;
+        if (zoom > 20) zoom = 20;
+        if (zoom < 0.01) zoom = 0.01;
+        canvas.setZoom(zoom);
+        opt.e.preventDefault();
+        opt.e.stopPropagation();
+    });
+
+    canvas.on('mouse:down', function (opt) {
+        var evt = opt.e;
+        if (evt.altKey === true) {
+            this.isDragging = true;
+            this.selection = false;
+            this.lastPosX = evt.clientX;
+            this.lastPosY = evt.clientY;
+        }
+    });
+
+    canvas.on('mouse:move', function (opt) {
+        if (this.isDragging) {
+            var e = opt.e;
+            var vpt = this.viewportTransform;
+            vpt[4] += e.clientX - this.lastPosX;
+            vpt[5] += e.clientY - this.lastPosY;
+            this.requestRenderAll();
+            this.lastPosX = e.clientX;
+            this.lastPosY = e.clientY;
+        }
+    });
+
+    canvas.on('mouse:up', function (opt) {
+        this.isDragging = false;
+        this.selection = true;
+    });
+</script>
+<script type="text/javascript" src="/eel.js"></script>
+</body>
+</html>
