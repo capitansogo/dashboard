@@ -5,27 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maintenance History</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        .form-control {
+            border-radius: 5px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
-    <h1 class="text-center my-4">История поломок/починок</h1>
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <button class="btn btn-primary" onclick="window.location.href = '/';">Back</button>
-        </div>
-        <div class="row">
-            <div class="col-md-6 offset-md-3">
-                <div class="form-group">
-                    <label for="inventoryNumber">Инвентарный номер</label>
-                    <input type="text" id="inventoryNumber" class="form-control" list="inventoryList">
-                    <datalist id="inventoryList"></datalist>
+    <div class="card">
+        <div class="card-header">История поломок/починок</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 offset-md-3">
+                    <a href="/" class="btn btn-secondary mb-3">Назад</a>
                 </div>
-                <button id="searchHistory" class="btn btn-primary mt-2">Поиск</button>
             </div>
-        </div>
-        <div class="row mt-4">
-            <div class="col-md-8 offset-md-2">
-                <div id="historyResult"></div>
+            <div class="row">
+                <div class="col-md-6 offset-md-3">
+                    <div class="form-group">
+                        <label for="inventoryNumber">Инвентарный номер</label>
+                        <input type="text" id="inventoryNumber" class="form-control" list="inventoryList">
+                        <datalist id="inventoryList"></datalist>
+                    </div>
+                    <button id="searchHistory" class="btn btn-primary mt-2">Поиск</button>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-md-8 offset-md-2">
+                    <div id="historyResult"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -47,7 +82,7 @@
             table.classList.add('table', 'table-striped');
             var thead = document.createElement('thead');
             var tr = document.createElement('tr');
-            var headers = ['Event Type', 'Event Date', 'Description'];
+            var headers = ['Тип события', 'Дата', 'Описание'];
             headers.forEach(function (header) {
                 var th = document.createElement('th');
                 th.textContent = header;
@@ -60,7 +95,7 @@
             historyData.forEach(function (event) {
                 var tr = document.createElement('tr');
                 var td1 = document.createElement('td');
-                td1.textContent = event.event_type;
+                td1.textContent = event.event_type === 'repair' ? 'починка' : (event.event_type === 'breakdown' ? 'поломка' : event.event_type);
                 var td2 = document.createElement('td');
                 td2.textContent = event.event_date;
                 var td3 = document.createElement('td');

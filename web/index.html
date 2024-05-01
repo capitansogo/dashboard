@@ -36,6 +36,32 @@
 <body>
 <div class="container-fluid">
     <h1 class="text-center my-4">Панель состояний</h1>
+    <div class="row mt-4">
+        <div class="col-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Рабочие станки</h5>
+                    <p class="card-text" id="workingCount">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Требуют ремонта</h5>
+                    <p class="card-text" id="needsRepairCount">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Неизвестный статус</h5>
+                    <p class="card-text" id="unknownCount">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-10">
             <div class="canvas-container">
@@ -99,7 +125,7 @@
                 width: 200,
                 height: 100,
                 objectCaching: false,
-                stroke: 'green',
+                stroke: shape.status === 'needs_repair' ? 'red' : 'green',
                 strokeWidth: 4
             });
 
@@ -119,12 +145,15 @@
 
             const group = new fabric.Group([rect, text1Obj, text2Obj], {
                 objectCaching: false,
-                angle: shape.angle // Устанавливаем угол поворота группы
+                angle: shape.angle,
+                status: shape.status
             });
 
             canvas.add(group);
             shapes.push(group);
         }
+
+        updateMachineCounts();
     });
 
 
@@ -162,8 +191,13 @@
     function Add() {
         var text1 = document.getElementById('text1').value;
         var text2 = document.getElementById('text2').value;
+        var status = 'working';
 
         var existingGroup = shapes.find(group => group.item(1).text === text1);
+        if (existingGroup) {
+            showNotification('warning', 'Станок с таким инвентарным номером уже существует.');
+            return;
+        }
         var groupId;
 
         if (existingGroup) {
@@ -199,12 +233,14 @@
 
         var group = new fabric.Group([rect, text1Obj, text2Obj], {
             objectCaching: false,
-            id: groupId
+            id: groupId,
+            status: status
         });
 
         canvas.add(group);
         canvas.setActiveObject(group);
         shapes.push(group);
+        updateMachineCounts();
     }
 
     let nextId = 1; // Начальное значение для идентификатора группы
@@ -216,15 +252,18 @@
             text2: group.item(2).text,
             x: group.left,
             y: group.top,
-            angle: group.angle
+            angle: group.angle,
+            status: group.status
         }));
 
         const response = await eel.save_to_database(data)();
         if (response) {
-            alert('Data saved successfully!');
+            showNotification('success', 'Данные успешно сохранены.');
+            updateMachineCounts();
         } else {
-            alert('Error saving data!');
+            showNotification('danger', 'Ошибка сохранения данных в базу данных.');
         }
+        updateMachineCounts();
     }
 
     function Search() {
@@ -275,12 +314,29 @@
         cornerSize: 24
     });
 
-    function deleteObject(eventData, transform) {
+    async function deleteObject(eventData, transform) {
         var target = transform.target;
         var canvas = target.canvas;
-        canvas.remove(target);
-        canvas.requestRenderAll();
-        shapes = shapes.filter(shape => shape !== target);
+
+        // Получаем данные станка
+        var text1 = target.item(1).text;
+        var text2 = target.item(2).text;
+        var x = target.left;
+        var y = target.top;
+        var angle = target.angle;
+
+        // Удаляем станок из базы данных
+        const response = await eel.delete_machine(text1, text2, x, y, angle)();
+
+        if (response) {
+            // Удаляем станок из интерфейса
+            canvas.remove(target);
+            canvas.requestRenderAll();
+            shapes = shapes.filter(shape => shape !== target);
+            updateMachineCounts();
+        } else {
+            showNotification('danger', 'Ошибка удаления станка из базы данных.');
+        }
     }
 
     function renderIcon(ctx, left, top, styleOverride, fabricObject) {
@@ -333,7 +389,7 @@
 
     document.getElementById('recordEvent').addEventListener('click', recordMaintenanceEvent);
 
-    function recordMaintenanceEvent() {
+    async function recordMaintenanceEvent() {
         var selectedGroup = canvas.getActiveObject();
         if (selectedGroup && selectedGroup.type === 'group') {
             var eventType = document.getElementById('eventType').value;
@@ -344,15 +400,33 @@
             var y = selectedGroup.top;
             var angle = selectedGroup.angle;
 
-            eel.record_maintenance_event(text1, text2, x, y, angle, eventType, eventDescription)(function (response) {
-                if (response) {
-                    alert('Maintenance event recorded successfully!');
-                } else {
-                    alert('Machine not found in the database. Maintenance event could not be recorded.');
+            const response = await eel.record_maintenance_event(text1, text2, x, y, angle, eventType, eventDescription)();
+
+            if (response) {
+                if (eventType === 'repair') {
+                    selectedGroup.item(0).set({stroke: 'green'});
+                    selectedGroup.status = 'working';
+                    canvas.renderAll();
+                } else if (eventType === 'breakdown') {
+                    selectedGroup.item(0).set({stroke: 'red'});
+                    selectedGroup.status = 'needs_repair';
+                    canvas.renderAll();
                 }
-            });
+
+                // Обновляем статус станка в базе данных
+                const updateResponse = await eel.update_machine_status(text1, text2, x, y, angle, selectedGroup.status)();
+
+                if (updateResponse) {
+                    // Обновляем количество станков в блоках статистики
+                    updateMachineCounts();
+                } else {
+                    showNotification('danger', 'Ошибка обновления статуса станка в базе данных.');
+                }
+            } else {
+                showNotification('danger', 'Ошибка записи события обслуживания в базе данных.');
+            }
         } else {
-            alert('Please select a machine group to record a maintenance event.');
+            showNotification('danger', 'Выберите станок для записи события обслуживания.');
         }
     }
 
@@ -385,6 +459,19 @@
             }
         }
     });
+
+    function showNotification(type, message) {
+        var notificationElement = document.getElementById('notification');
+        notificationElement.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    }
+
+    async function updateMachineCounts() {
+        const counts = await eel.get_machine_counts()();
+        const countsData = JSON.parse(counts);
+        document.getElementById('workingCount').textContent = countsData['working'] || 0;
+        document.getElementById('needsRepairCount').textContent = countsData['needs_repair'] || 0;
+        document.getElementById('unknownCount').textContent = countsData['unknown'] || 0;
+    }
 </script>
 <script type="text/javascript" src="/eel.js"></script>
 </body>
