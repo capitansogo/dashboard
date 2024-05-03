@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canvas with Fabric.js</title>
+    <title>Панель состояний</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body, html {
@@ -188,6 +188,59 @@
     document.getElementById('save').addEventListener('click', Save);
     document.getElementById('search').addEventListener('click', Search);
 
+    // Настройки сетки
+    var gridSize = 50; // Размер ячейки сетки
+    var gridColor = '#ccc'; // Цвет линий сетки
+    var gridWidth = 1; // Толщина линий сетки
+
+    // Функция для отрисовки сетки на канвасе
+    // function drawGrid() {
+    //     var width = canvas.width * 100;
+    //     var height = canvas.height * 100;
+    //     var centerX = canvas.width / 2;
+    //     var centerY = canvas.height / 2;
+    //
+    //     // Очистить существующие линии сетки
+    //     canvas.getObjects().forEach(function (obj) {
+    //         if (obj.isGridLine) {
+    //             canvas.remove(obj);
+    //         }
+    //     });
+    //
+    //     // Вертикальные линии
+    //     for (var x = -width / 2; x <= width / 2; x += gridSize) {
+    //         canvas.add(new fabric.Line([centerX + x, -height / 2, centerX + x, height / 2], {
+    //             stroke: gridColor,
+    //             selectable: false,
+    //             evented: false,
+    //             strokeWidth: gridWidth,
+    //             isGridLine: true
+    //         }));
+    //     }
+    //
+    //     // Горизонтальные линии
+    //     for (var y = -height / 2; y <= height / 2; y += gridSize) {
+    //         canvas.add(new fabric.Line([-width / 2, centerY + y, width / 2, centerY + y], {
+    //             stroke: gridColor,
+    //             selectable: false,
+    //             evented: false,
+    //             strokeWidth: gridWidth,
+    //             isGridLine: true
+    //         }));
+    //     }
+    // }
+    //
+    // drawGrid();
+
+    function snapToGrid(obj) {
+        var snapX = Math.round(obj.left / gridSize) * gridSize;
+        var snapY = Math.round(obj.top / gridSize) * gridSize;
+        obj.set({
+            left: snapX,
+            top: snapY
+        });
+    }
+
     function Add() {
         var text1 = document.getElementById('text1').value;
         var text2 = document.getElementById('text2').value;
@@ -237,10 +290,13 @@
             status: status
         });
 
+        snapToGrid(group); // Привязываем станок к сетке
+
         canvas.add(group);
         canvas.setActiveObject(group);
         shapes.push(group);
         updateMachineCounts();
+        Save();
     }
 
     let nextId = 1; // Начальное значение для идентификатора группы
@@ -337,6 +393,8 @@
         } else {
             showNotification('danger', 'Ошибка удаления станка из базы данных.');
         }
+        await updateMachineCounts();
+        await Save();
     }
 
     function renderIcon(ctx, left, top, styleOverride, fabricObject) {
@@ -353,7 +411,7 @@
         var zoom = canvas.getZoom();
         zoom *= 0.999 ** delta;
         if (zoom > 20) zoom = 20;
-        if (zoom < 0.01) zoom = 0.01;
+        if (zoom < 0.1) zoom = 0.1;
         canvas.setZoom(zoom);
         opt.e.preventDefault();
         opt.e.stopPropagation();
@@ -361,6 +419,7 @@
 
     canvas.on('mouse:down', function (opt) {
         var evt = opt.e;
+
         if (evt.altKey === true) {
             this.isDragging = true;
             this.selection = false;
@@ -386,6 +445,10 @@
         this.selection = true;
     });
 
+    canvas.on('object:moving', function (options) {
+        snapToGrid(options.target);
+    });
+
 
     document.getElementById('recordEvent').addEventListener('click', recordMaintenanceEvent);
 
@@ -399,6 +462,14 @@
             var x = selectedGroup.left;
             var y = selectedGroup.top;
             var angle = selectedGroup.angle;
+
+            console.log("Event Type:", eventType);
+            console.log("Event Description:", eventDescription);
+            console.log("Text 1:", text1);
+            console.log("Text 2:", text2);
+            console.log("X:", x);
+            console.log("Y:", y);
+            console.log("Angle:", angle);
 
             const response = await eel.record_maintenance_event(text1, text2, x, y, angle, eventType, eventDescription)();
 
@@ -458,11 +529,16 @@
                 historyList.textContent = 'No maintenance history found for this machine.';
             }
         }
+        Save();
     });
 
     function showNotification(type, message) {
         var notificationElement = document.getElementById('notification');
         notificationElement.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+
+        setTimeout(() => {
+            notificationElement.innerHTML = '';
+        }, 1500);
     }
 
     async function updateMachineCounts() {

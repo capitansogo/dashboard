@@ -1,6 +1,15 @@
 import json
 import sqlite3
+import sys, io
+from time import sleep
+
+import webview
+
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
 import eel
+
+PORT = 8001
 
 globals()['flag'] = False
 
@@ -55,19 +64,31 @@ def record_maintenance_event(text1, text2, x, y, angle, event_type, description)
     try:
         conn = sqlite3.connect('machines.sl3')
         cursor = conn.cursor()
-        cursor.execute("SELECT id FROM machines WHERE text1 = ? AND text2 = ? AND x = ? AND y = ? AND angle = ?",
-                       (text1, text2, x, y, angle))
+        cursor.execute("SELECT id FROM machines WHERE text1 = ? AND text2 = ?",
+                       (text1, text2))
         result = cursor.fetchone()
+        print("Result of SELECT query:", result)
+
         if result:
             machine_id = result[0]
             cursor.execute("INSERT INTO maintenance_history (machine_id, event_type, description) VALUES (?, ?, ?)",
                            (machine_id, event_type, description))
+            print("INSERT INTO maintenance_history executed successfully")
+
             if event_type == 'breakdown':
                 cursor.execute("UPDATE machines SET status = 'needs_repair' WHERE id = ?", (machine_id,))
+                print("UPDATE machines SET status = 'needs_repair' executed successfully")
+
+            if event_type == 'repair':
+                cursor.execute("UPDATE machines SET status = 'working' WHERE id = ?", (machine_id,))
+                print("UPDATE machines SET status = 'working' executed successfully")
+
             conn.commit()
+            print("Changes committed to the database")
             conn.close()
             return True
         else:
+            print("No matching machine found in the database")
             conn.close()
             return False
     except Exception as e:
@@ -117,8 +138,8 @@ def delete_machine(text1, text2, x, y, angle):
     try:
         conn = sqlite3.connect('machines.sl3')
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM machines WHERE text1 = ? AND text2 = ? AND x = ? AND y = ? AND angle = ?",
-                       (text1, text2, x, y, angle))
+        cursor.execute("DELETE FROM machines WHERE text1 = ? AND text2 = ? ",
+                       (text1, text2))
         conn.commit()
         conn.close()
         return True
@@ -147,8 +168,8 @@ def update_machine_status(text1, text2, x, y, angle, status):
     try:
         conn = sqlite3.connect('machines.sl3')
         cursor = conn.cursor()
-        cursor.execute("UPDATE machines SET status = ? WHERE text1 = ? AND text2 = ? AND x = ? AND y = ? AND angle = ?",
-                       (status, text1, text2, x, y, angle))
+        cursor.execute("UPDATE machines SET status = ? WHERE text1 = ? AND text2 = ?",
+                       (status, text1, text2))
         conn.commit()
         conn.close()
         return True
@@ -160,7 +181,7 @@ def update_machine_status(text1, text2, x, y, angle, status):
 if __name__ == "__main__":
     eel.init('web')
     try:
-        eel.start('index.html', size=(1920, 1080))
+        eel.start('index.html', mode='chrome')
     except OSError as e:
         if "Can't find Google Chrome/Chromium installation" in str(e):
             eel.start('index.html', mode="browser")
