@@ -181,7 +181,7 @@ def update_machine_status(text1, text2, x, y, angle, status):
 if __name__ == "__main__":
     eel.init('web')
     try:
-        eel.start('index.html', mode='chrome')
+        eel.start('index.html', mode='Chrome')
     except OSError as e:
         if "Can't find Google Chrome/Chromium installation" in str(e):
             eel.start('index.html', mode="browser")

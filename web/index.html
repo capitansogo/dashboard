@@ -112,7 +112,7 @@
         window.location.href = 'history.html';
     });
 
-    var shapes = [];
+    let shapes = [];
     window.addEventListener('DOMContentLoaded', async function () {
         const data = await eel.load_from_database()();
         const loadedShapes = JSON.parse(data);
@@ -157,7 +157,7 @@
     });
 
 
-    var canvas = new fabric.Canvas('c', {
+    let canvas = new fabric.Canvas('c', {
         width: window.innerWidth * 1.5,
         height: window.innerHeight * 0.8
     });
@@ -175,9 +175,9 @@
     resizeCanvas();
 
 
-    var deleteIcon = "data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3C!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'%3E%3Csvg version='1.1' id='Ebene_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='595.275px' height='595.275px' viewBox='200 215 230 470' xml:space='preserve'%3E%3Ccircle style='fill:%23F44336;' cx='299.76' cy='439.067' r='218.516'/%3E%3Cg%3E%3Crect x='267.162' y='307.978' transform='matrix(0.7071 -0.7071 0.7071 0.7071 -222.6202 340.6915)' style='fill:white;' width='65.545' height='262.18'/%3E%3Crect x='266.988' y='308.153' transform='matrix(0.7071 0.7071 -0.7071 0.7071 398.3889 -83.3116)' style='fill:white;' width='65.544' height='262.179'/%3E%3C/g%3E%3C/svg%3E";
+    let deleteIcon = "data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3C!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'%3E%3Csvg version='1.1' id='Ebene_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='595.275px' height='595.275px' viewBox='200 215 230 470' xml:space='preserve'%3E%3Ccircle style='fill:%23F44336;' cx='299.76' cy='439.067' r='218.516'/%3E%3Cg%3E%3Crect x='267.162' y='307.978' transform='matrix(0.7071 -0.7071 0.7071 0.7071 -222.6202 340.6915)' style='fill:white;' width='65.545' height='262.18'/%3E%3Crect x='266.988' y='308.153' transform='matrix(0.7071 0.7071 -0.7071 0.7071 398.3889 -83.3116)' style='fill:white;' width='65.544' height='262.179'/%3E%3C/g%3E%3C/svg%3E";
 
-    var img = document.createElement('img');
+    let img = document.createElement('img');
     img.src = deleteIcon;
 
     fabric.Object.prototype.transparentCorners = false;
@@ -189,52 +189,51 @@
     document.getElementById('search').addEventListener('click', Search);
 
     // Настройки сетки
-    var gridSize = 50; // Размер ячейки сетки
-    var gridColor = '#ccc'; // Цвет линий сетки
-    var gridWidth = 1; // Толщина линий сетки
+    let gridSize = 50; // Размер ячейки сетки
+    let gridColor = '#ccc'; // Цвет линий сетки
+    let gridWidth = 1; // Толщина линий сетки
+    
+    function drawGrid() {
+        let width = canvas.width * 100;
+        let height = canvas.height * 100;
+        let centerX = canvas.width / 2;
+        let centerY = canvas.height / 2;
 
-    // Функция для отрисовки сетки на канвасе
-    // function drawGrid() {
-    //     var width = canvas.width * 100;
-    //     var height = canvas.height * 100;
-    //     var centerX = canvas.width / 2;
-    //     var centerY = canvas.height / 2;
-    //
-    //     // Очистить существующие линии сетки
-    //     canvas.getObjects().forEach(function (obj) {
-    //         if (obj.isGridLine) {
-    //             canvas.remove(obj);
-    //         }
-    //     });
-    //
-    //     // Вертикальные линии
-    //     for (var x = -width / 2; x <= width / 2; x += gridSize) {
-    //         canvas.add(new fabric.Line([centerX + x, -height / 2, centerX + x, height / 2], {
-    //             stroke: gridColor,
-    //             selectable: false,
-    //             evented: false,
-    //             strokeWidth: gridWidth,
-    //             isGridLine: true
-    //         }));
-    //     }
-    //
-    //     // Горизонтальные линии
-    //     for (var y = -height / 2; y <= height / 2; y += gridSize) {
-    //         canvas.add(new fabric.Line([-width / 2, centerY + y, width / 2, centerY + y], {
-    //             stroke: gridColor,
-    //             selectable: false,
-    //             evented: false,
-    //             strokeWidth: gridWidth,
-    //             isGridLine: true
-    //         }));
-    //     }
-    // }
-    //
-    // drawGrid();
+        // Очистить существующие линии сетки
+        canvas.getObjects().forEach(function (obj) {
+            if (obj.isGridLine) {
+                canvas.remove(obj);
+            }
+        });
+
+        // Вертикальные линии
+        for (let x = -width / 2; x <= width / 2; x += gridSize) {
+            canvas.add(new fabric.Line([centerX + x, -height / 2, centerX + x, height / 2], {
+                stroke: gridColor,
+                selectable: false,
+                evented: false,
+                strokeWidth: gridWidth,
+                isGridLine: true
+            }));
+        }
+
+        // Горизонтальные линии
+        for (let y = -height / 2; y <= height / 2; y += gridSize) {
+            canvas.add(new fabric.Line([-width / 2, centerY + y, width / 2, centerY + y], {
+                stroke: gridColor,
+                selectable: false,
+                evented: false,
+                strokeWidth: gridWidth,
+                isGridLine: true
+            }));
+        }
+    }
+
+    drawGrid();
 
     function snapToGrid(obj) {
-        var snapX = Math.round(obj.left / gridSize) * gridSize;
-        var snapY = Math.round(obj.top / gridSize) * gridSize;
+        let snapX = Math.round(obj.left / gridSize) * gridSize;
+        let snapY = Math.round(obj.top / gridSize) * gridSize;
         obj.set({
             left: snapX,
             top: snapY
@@ -242,16 +241,16 @@
     }
 
     function Add() {
-        var text1 = document.getElementById('text1').value;
-        var text2 = document.getElementById('text2').value;
-        var status = 'working';
+        let text1 = document.getElementById('text1').value;
+        let text2 = document.getElementById('text2').value;
+        let status = 'working';
 
-        var existingGroup = shapes.find(group => group.item(1).text === text1);
+        let existingGroup = shapes.find(group => group.item(1).text === text1);
         if (existingGroup) {
             showNotification('warning', 'Станок с таким инвентарным номером уже существует.');
             return;
         }
-        var groupId;
+        let groupId;
 
         if (existingGroup) {
             groupId = existingGroup.id;
@@ -259,7 +258,7 @@
             groupId = nextId++;
         }
 
-        var rect = new fabric.Rect({
+        let rect = new fabric.Rect({
             left: 100,
             top: 50,
             fill: 'lightblue',
@@ -270,21 +269,21 @@
             strokeWidth: 4
         });
 
-        var text1Obj = new fabric.Text(text1, {
+        let text1Obj = new fabric.Text(text1, {
             fontSize: 16,
             fontFamily: 'Arial',
             left: rect.left + 10,
             top: rect.top + 10
         });
 
-        var text2Obj = new fabric.Text(text2, {
+        let text2Obj = new fabric.Text(text2, {
             fontSize: 16,
             fontFamily: 'Arial',
             left: rect.left + 10,
             top: rect.top + rect.height - 30
         });
 
-        var group = new fabric.Group([rect, text1Obj, text2Obj], {
+        let group = new fabric.Group([rect, text1Obj, text2Obj], {
             objectCaching: false,
             id: groupId,
             status: status
@@ -323,13 +322,13 @@
     }
 
     function Search() {
-        var searchText = document.getElementById('searchText').value;
-        var notificationElement = document.getElementById('notification');
-        var foundObject = null;
+        let searchText = document.getElementById('searchText').value;
+        let notificationElement = document.getElementById('notification');
+        let foundObject = null;
 
-        for (var i = 0; i < shapes.length; i++) {
-            var group = shapes[i];
-            var text1Obj = group.item(1);
+        for (let i = 0; i < shapes.length; i++) {
+            let group = shapes[i];
+            let text1Obj = group.item(1);
             if (text1Obj.text === searchText) {
                 foundObject = group;
                 break;
@@ -337,14 +336,14 @@
         }
 
         if (foundObject) {
-            var objectCenter = foundObject.getCenterPoint();
-            var canvasCenter = new fabric.Point(canvas.getWidth() / 2, canvas.getHeight() / 2);
-            var zoomLevel = 1.5;
+            let objectCenter = foundObject.getCenterPoint();
+            let canvasCenter = new fabric.Point(canvas.getWidth() / 2, canvas.getHeight() / 2);
+            let zoomLevel = 1.5;
 
             canvas.setZoom(zoomLevel);
 
-            var objectOffsetX = (canvasCenter.x - objectCenter.x) * zoomLevel;
-            var objectOffsetY = (canvasCenter.y - objectCenter.y) * zoomLevel;
+            let objectOffsetX = (canvasCenter.x - objectCenter.x) * zoomLevel;
+            let objectOffsetY = (canvasCenter.y - objectCenter.y) * zoomLevel;
 
             canvas.absolutePan({
                 x: canvasCenter.x - objectOffsetX,
@@ -371,15 +370,15 @@
     });
 
     async function deleteObject(eventData, transform) {
-        var target = transform.target;
-        var canvas = target.canvas;
+        let target = transform.target;
+        let canvas = target.canvas;
 
         // Получаем данные станка
-        var text1 = target.item(1).text;
-        var text2 = target.item(2).text;
-        var x = target.left;
-        var y = target.top;
-        var angle = target.angle;
+        let text1 = target.item(1).text;
+        let text2 = target.item(2).text;
+        let x = target.left;
+        let y = target.top;
+        let angle = target.angle;
 
         // Удаляем станок из базы данных
         const response = await eel.delete_machine(text1, text2, x, y, angle)();
@@ -398,7 +397,7 @@
     }
 
     function renderIcon(ctx, left, top, styleOverride, fabricObject) {
-        var size = this.cornerSize;
+        let size = this.cornerSize;
         ctx.save();
         ctx.translate(left, top);
         ctx.rotate(fabric.util.degreesToRadians(fabricObject.angle));
@@ -407,8 +406,8 @@
     }
 
     canvas.on('mouse:wheel', function (opt) {
-        var delta = opt.e.deltaY;
-        var zoom = canvas.getZoom();
+        let delta = opt.e.deltaY;
+        let zoom = canvas.getZoom();
         zoom *= 0.999 ** delta;
         if (zoom > 20) zoom = 20;
         if (zoom < 0.1) zoom = 0.1;
@@ -418,7 +417,7 @@
     });
 
     canvas.on('mouse:down', function (opt) {
-        var evt = opt.e;
+        let evt = opt.e;
 
         if (evt.altKey === true) {
             this.isDragging = true;
@@ -430,8 +429,8 @@
 
     canvas.on('mouse:move', function (opt) {
         if (this.isDragging) {
-            var e = opt.e;
-            var vpt = this.viewportTransform;
+            let e = opt.e;
+            let vpt = this.viewportTransform;
             vpt[4] += e.clientX - this.lastPosX;
             vpt[5] += e.clientY - this.lastPosY;
             this.requestRenderAll();
@@ -453,15 +452,15 @@
     document.getElementById('recordEvent').addEventListener('click', recordMaintenanceEvent);
 
     async function recordMaintenanceEvent() {
-        var selectedGroup = canvas.getActiveObject();
+        let selectedGroup = canvas.getActiveObject();
         if (selectedGroup && selectedGroup.type === 'group') {
-            var eventType = document.getElementById('eventType').value;
-            var eventDescription = document.getElementById('eventDescription').value;
-            var text1 = selectedGroup.item(1).text;
-            var text2 = selectedGroup.item(2).text;
-            var x = selectedGroup.left;
-            var y = selectedGroup.top;
-            var angle = selectedGroup.angle;
+            let eventType = document.getElementById('eventType').value;
+            let eventDescription = document.getElementById('eventDescription').value;
+            let text1 = selectedGroup.item(1).text;
+            let text2 = selectedGroup.item(2).text;
+            let x = selectedGroup.left;
+            let y = selectedGroup.top;
+            let angle = selectedGroup.angle;
 
             console.log("Event Type:", eventType);
             console.log("Event Description:", eventDescription);
@@ -502,24 +501,24 @@
     }
 
     canvas.on('object:selected', async function (e) {
-        var selectedObject = e.target;
+        let selectedObject = e.target;
         if (selectedObject && selectedObject.type === 'group') {
-            var text1 = selectedObject.item(1).text;
-            var text2 = selectedObject.item(2).text;
-            var x = selectedObject.left;
-            var y = selectedObject.top;
-            var angle = selectedObject.angle;
+            let text1 = selectedObject.item(1).text;
+            let text2 = selectedObject.item(2).text;
+            let x = selectedObject.left;
+            let y = selectedObject.top;
+            let angle = selectedObject.angle;
 
             const history = await eel.get_maintenance_history(text1, text2, x, y, angle)();
-            var historyList = document.getElementById('historyList');
+            let historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
 
-            var historyData = JSON.parse(history);
+            let historyData = JSON.parse(history);
             if (historyData.length > 0) {
-                var ul = document.createElement('ul');
+                let ul = document.createElement('ul');
                 ul.classList.add('list-group');
                 historyData.forEach(function (event) {
-                    var li = document.createElement('li');
+                    let li = document.createElement('li');
                     li.classList.add('list-group-item');
                     li.textContent = `${event.event_type} - ${event.event_date} - ${event.description}`;
                     ul.appendChild(li);
@@ -533,7 +532,7 @@
     });
 
     function showNotification(type, message) {
-        var notificationElement = document.getElementById('notification');
+        let notificationElement = document.getElementById('notification');
         notificationElement.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
 
         setTimeout(() => {
